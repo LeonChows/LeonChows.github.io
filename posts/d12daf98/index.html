@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/1.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/1.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/1.jpg">
+  <link rel="mask-icon" href="/images/32.ico" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HOOK NTQuerySystemInformation 实现隐藏进程这个起始就是一个断链隐藏 而且很麻烦 没有什么特别之处 最多当学习HOOK了吧 但是可以通过这个项目搞一搞HOOK 进程快照函数 叫啥忘了 某些Game会调用嗷~先放代码：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HOOKNTQuerySystemInformation实现隐藏进程">
+<meta property="og:url" content="http://example.com/posts/d12daf98/index.html">
+<meta property="og:site_name" content="LeonChow">
+<meta property="og:description" content="HOOK NTQuerySystemInformation 实现隐藏进程这个起始就是一个断链隐藏 而且很麻烦 没有什么特别之处 最多当学习HOOK了吧 但是可以通过这个项目搞一搞HOOK 进程快照函数 叫啥忘了 某些Game会调用嗷~先放代码：">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-04-18T19:51:04.000Z">
+<meta property="article:modified_time" content="2024-04-29T08:53:00.459Z">
+<meta property="article:author" content="Leon Chow">
+<meta property="article:tag" content="API">
+<meta property="article:tag" content="逆向">
+<meta property="article:tag" content="隐藏进程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/posts/d12daf98/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>HOOKNTQuerySystemInformation实现隐藏进程 | LeonChow</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+	<a target="_blank" rel="noopener" href="https://github.com/LeonChows" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">LeonChow</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">4</span></a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/posts/d12daf98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/1.jpg">
+      <meta itemprop="name" content="Leon Chow">
+      <meta itemprop="description" content="人生不是轨道 是旷野">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="LeonChow">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HOOKNTQuerySystemInformation实现隐藏进程
+        </h1>
+
+        <div class="post-meta">
+		   
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-04-18 19:51:04" itemprop="dateCreated datePublished" datetime="2024-04-18T19:51:04Z">2024-04-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-04-29 08:53:00" itemprop="dateModified" datetime="2024-04-29T08:53:00Z">2024-04-29</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/WinAPI%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">WinAPI编程</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/WinAPI%E7%BC%96%E7%A8%8B/%E9%80%86%E5%90%91/" itemprop="url" rel="index"><span itemprop="name">逆向</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.2k</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="HOOK-NTQuerySystemInformation-实现隐藏进程"><a href="#HOOK-NTQuerySystemInformation-实现隐藏进程" class="headerlink" title="HOOK NTQuerySystemInformation 实现隐藏进程"></a>HOOK NTQuerySystemInformation 实现隐藏进程</h1><h2 id="这个起始就是一个断链隐藏-而且很麻烦-没有什么特别之处-最多当学习HOOK了吧-但是可以通过这个项目搞一搞HOOK-进程快照函数-叫啥忘了-某些Game会调用嗷"><a href="#这个起始就是一个断链隐藏-而且很麻烦-没有什么特别之处-最多当学习HOOK了吧-但是可以通过这个项目搞一搞HOOK-进程快照函数-叫啥忘了-某些Game会调用嗷" class="headerlink" title="这个起始就是一个断链隐藏 而且很麻烦 没有什么特别之处 最多当学习HOOK了吧 但是可以通过这个项目搞一搞HOOK 进程快照函数 叫啥忘了 某些Game会调用嗷~"></a>这个起始就是一个断链隐藏 而且很麻烦 没有什么特别之处 最多当学习HOOK了吧 但是可以通过这个项目搞一搞HOOK 进程快照函数 叫啥忘了 某些Game会调用嗷~</h2><h2 id="先放代码："><a href="#先放代码：" class="headerlink" title="先放代码："></a>先放代码：</h2><span id="more"></span>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;fun.h&quot;</span><br><span class="line">#include &lt;windows.h&gt;</span><br><span class="line">#include &lt;string&gt;</span><br><span class="line">enum SYSTEM_INFORMATION_CLASS</span><br><span class="line">&#123;</span><br><span class="line">	SystemProcessInformation = 5</span><br><span class="line">&#125;;</span><br><span class="line">typedef struct _UNICODE_STRING &#123;</span><br><span class="line">	USHORT Length;</span><br><span class="line">	USHORT MaximumLength;</span><br><span class="line">	PWSTR  Buffer;</span><br><span class="line">&#125; UNICODE_STRING;</span><br><span class="line">typedef UNICODE_STRING* PUNICODE_STRING;</span><br><span class="line">typedef const UNICODE_STRING* PCUNICODE_STRING;</span><br><span class="line">typedef LONG KPRIORITY;</span><br><span class="line">typedef struct _CLIENT_ID &#123;</span><br><span class="line">	HANDLE UniqueProcess;</span><br><span class="line">	HANDLE UniqueThread;</span><br><span class="line">&#125; CLIENT_ID;</span><br><span class="line">typedef struct _SYSTEM_PROCESS_INFORMATION &#123;</span><br><span class="line">	ULONG NextEntryOffset;//链表头</span><br><span class="line">	ULONG NumberOfThreads;//进程中的线程数。</span><br><span class="line">	BYTE Reserved1[48];</span><br><span class="line">	UNICODE_STRING ImageName;//进程的图像名称</span><br><span class="line">	KPRIORITY BasePriority;//进程中创建的线程的启动优先级</span><br><span class="line">	HANDLE UniqueProcessId;//包含进程的唯一进程 ID</span><br><span class="line">	PVOID Reserved2;</span><br><span class="line">	ULONG HandleCount;//进程正在使用的句柄总数</span><br><span class="line">	ULONG SessionId;//进程会话的会话标识符</span><br><span class="line">	PVOID Reserved3;</span><br><span class="line">	SIZE_T PeakVirtualSize;//虚拟内存的峰值大小（以字节为单位）</span><br><span class="line">	SIZE_T VirtualSize;//虚拟内存的当前大小（以字节为单位）</span><br><span class="line">	ULONG Reserved4;</span><br><span class="line">	SIZE_T PeakWorkingSetSize;//进程工作集的峰值大小（以千字节为单位）</span><br><span class="line">	SIZE_T WorkingSetSize;</span><br><span class="line">	PVOID Reserved5;</span><br><span class="line">	SIZE_T QuotaPagedPoolUsage;//进程收取的分页池使用的当前配额</span><br><span class="line">	PVOID Reserved6;</span><br><span class="line">	SIZE_T QuotaNonPagedPoolUsage;//进程收取的非分页池使用的当前配额</span><br><span class="line">	SIZE_T PagefileUsage;//页面文件存储的字节数</span><br><span class="line">	SIZE_T PeakPagefileUsage;//页面文件存储的最大字节数</span><br><span class="line">	SIZE_T PrivatePageCount;//进程使用的内存页数</span><br><span class="line">	LARGE_INTEGER Reserved7[6];</span><br><span class="line">&#125; SYSTEM_PROCESS_INFORMATION, * PSYSTEM_PROCESS_INFORMATION;</span><br><span class="line">typedef struct _SYSTEM_THREAD_INFORMATION &#123;</span><br><span class="line">	LARGE_INTEGER KernelTime;</span><br><span class="line">	LARGE_INTEGER UserTime;</span><br><span class="line">	LARGE_INTEGER CreateTime;</span><br><span class="line">	ULONG WaitTime;</span><br><span class="line">	PVOID StartAddress;</span><br><span class="line">	CLIENT_ID ClientId;</span><br><span class="line">	LONG Priority;</span><br><span class="line">	LONG BasePriority;</span><br><span class="line">	ULONG ContextSwitches;</span><br><span class="line">	ULONG ThreadState;</span><br><span class="line">	ULONG WaitReason;</span><br><span class="line">&#125; SYSTEM_THREAD_INFORMATION,</span><br><span class="line">* PSYSTEM_THREAD_INFORMATION;</span><br><span class="line">typedef  NTSTATUS(WINAPI* MyNtQuerySystemInformation)(</span><br><span class="line">	SYSTEM_INFORMATION_CLASS SystemInformationClass,</span><br><span class="line">	PVOID                    SystemInformation,</span><br><span class="line">	ULONG                    SystemInformationLength,</span><br><span class="line">	PULONG                   ReturnLength</span><br><span class="line">	);</span><br><span class="line"></span><br><span class="line">BYTE dwbuff[5]&#123;&#125;, buffer[5]&#123; 0xE9, &#125;;//jmp</span><br><span class="line">FARPROC NtQSInfo;</span><br><span class="line">NTSTATUS WINAPI NewNtQuerySystemInformation(</span><br><span class="line">	SYSTEM_INFORMATION_CLASS SystemInformationClass,</span><br><span class="line">	PVOID                    SystemInformation,</span><br><span class="line">	ULONG                    SystemInformationLength,</span><br><span class="line">	PULONG                   ReturnLength);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">void hook() &#123;</span><br><span class="line">	NtQSInfo = GetProcAddress(GetModuleHandle(TEXT(&quot;ntdll.dll&quot;)), &quot;NtQuerySystemInformation&quot;);</span><br><span class="line">	if (!NtQSInfo)</span><br><span class="line">		return ;</span><br><span class="line">	DWORD OldProtect = 0;</span><br><span class="line">	//硬编码地址 = 要跳转的目标地址 - 指令的地址 - 5（指令的长度）</span><br><span class="line">	DWORD Funtion = (DWORD)&amp;NewNtQuerySystemInformation - (DWORD)NtQSInfo - 5;</span><br><span class="line">	memcpy(&amp;buffer[1], &amp;Funtion, 4);//拷贝字节</span><br><span class="line">	VirtualProtect(NtQSInfo, 5, PAGE_EXECUTE_READWRITE, &amp;OldProtect);//取消内存保护</span><br><span class="line">	memcpy(dwbuff, NtQSInfo, 5);//保存原字节</span><br><span class="line">	memcpy(NtQSInfo, buffer, 5);//写入hook</span><br><span class="line">	VirtualProtect(NtQSInfo, 5, OldProtect, &amp;OldProtect);//恢复保护</span><br><span class="line">&#125;</span><br><span class="line">void unhook() &#123;</span><br><span class="line">	DWORD OldProtect = 0;</span><br><span class="line">	VirtualProtect(NtQSInfo, 5, PAGE_EXECUTE_READWRITE, &amp;OldProtect);//取消内存保护</span><br><span class="line">	PBYTE Temp = (PBYTE)NtQSInfo;</span><br><span class="line">	if (Temp[0] == 0xE9)</span><br><span class="line">		memcpy(NtQSInfo, dwbuff, 5);//卸载hook</span><br><span class="line">	VirtualProtect(NtQSInfo, 5, OldProtect, &amp;OldProtect);//恢复保护</span><br><span class="line">&#125;</span><br><span class="line">NTSTATUS WINAPI NewNtQuerySystemInformation(</span><br><span class="line">	SYSTEM_INFORMATION_CLASS SystemInformationClass,</span><br><span class="line">	PVOID                    SystemInformation,</span><br><span class="line">	ULONG                    SystemInformationLength,</span><br><span class="line">	PULONG                   ReturnLength)</span><br><span class="line">&#123;</span><br><span class="line">	NTSTATUS status;</span><br><span class="line">	FARPROC pFunc;</span><br><span class="line">	PSYSTEM_PROCESS_INFORMATION pCur, pPrev = NULL;</span><br><span class="line">	unhook();</span><br><span class="line">	MyNtQuerySystemInformation NtQuerySystemInformation = NULL;</span><br><span class="line">	NtQuerySystemInformation = (MyNtQuerySystemInformation)NtQSInfo;</span><br><span class="line">	status = NtQuerySystemInformation(SystemInformationClass, SystemInformation, SystemInformationLength, ReturnLength);</span><br><span class="line">	if (status != 0)</span><br><span class="line">		goto END;</span><br><span class="line">	if (SystemInformationClass == SystemProcessInformation)</span><br><span class="line">	&#123;</span><br><span class="line">		DWORD dwPID = GetCurrentProcessId();</span><br><span class="line">		pCur = (PSYSTEM_PROCESS_INFORMATION)SystemInformation;</span><br><span class="line">		while (true)</span><br><span class="line">		&#123;</span><br><span class="line">			if ((DWORD)pCur-&gt;UniqueProcessId == dwPID)</span><br><span class="line">			&#123;</span><br><span class="line">				if (pCur-&gt;NextEntryOffset == 0)</span><br><span class="line">					pPrev-&gt;NextEntryOffset = 0;</span><br><span class="line">				else</span><br><span class="line">					pPrev-&gt;NextEntryOffset += pPrev-&gt;NextEntryOffset;</span><br><span class="line">			&#125;</span><br><span class="line">			else</span><br><span class="line">			&#123;</span><br><span class="line">				pPrev = pCur;</span><br><span class="line">			&#125;</span><br><span class="line">			pCur = (PSYSTEM_PROCESS_INFORMATION)((ULONG)pCur + pCur-&gt;NextEntryOffset);</span><br><span class="line">			if (pCur-&gt;NextEntryOffset == 0)</span><br><span class="line">				break;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">END:</span><br><span class="line">	hook();</span><br><span class="line">	return status;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="项目原理"><a href="#项目原理" class="headerlink" title="项目原理"></a>项目原理</h2><ul>
+<li>拦截到该函数的参数(这个函数名字太长 以下统称该函数) 修改值之后返回即可 </li>
+<li>注意 最好写成DLL的方式 不然会很麻烦 而且需要注入到任务管理器 普通线程注入即可 若要注入一些 系统会话为0 || 高权限进程 恐怕线程注入无法达到目的</li>
+</ul>
+<h2 id="项目实现"><a href="#项目实现" class="headerlink" title="项目实现"></a>项目实现</h2><ul>
+<li>获取该函数的函数地址 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetMo</span><br></pre></td></tr></table></figure></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div></div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/pay/wechat_pay.jpg" alt="Leon Chow 微信支付">
+        <p>微信支付</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/atom.xml">
+            <span class="icon">
+              <i class="fa fa-rss"></i>
+            </span>
+
+            <span class="label">RSS</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/API/" rel="tag"># API</a>
+              <a href="/tags/%E9%80%86%E5%90%91/" rel="tag"># 逆向</a>
+              <a href="/tags/%E9%9A%90%E8%97%8F%E8%BF%9B%E7%A8%8B/" rel="tag"># 隐藏进程</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/posts/42e9c570/" rel="prev" title="使用GithubPages创建自已的博客包含域名修改">
+      <i class="fa fa-chevron-left"></i> 使用GithubPages创建自已的博客包含域名修改
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/posts/ef20bccd/" rel="next" title="记一次绕过StackCanaries的笔记">
+      记一次绕过StackCanaries的笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#HOOK-NTQuerySystemInformation-%E5%AE%9E%E7%8E%B0%E9%9A%90%E8%97%8F%E8%BF%9B%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">HOOK NTQuerySystemInformation 实现隐藏进程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%B8%AA%E8%B5%B7%E5%A7%8B%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AA%E6%96%AD%E9%93%BE%E9%9A%90%E8%97%8F-%E8%80%8C%E4%B8%94%E5%BE%88%E9%BA%BB%E7%83%A6-%E6%B2%A1%E6%9C%89%E4%BB%80%E4%B9%88%E7%89%B9%E5%88%AB%E4%B9%8B%E5%A4%84-%E6%9C%80%E5%A4%9A%E5%BD%93%E5%AD%A6%E4%B9%A0HOOK%E4%BA%86%E5%90%A7-%E4%BD%86%E6%98%AF%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E6%90%9E%E4%B8%80%E6%90%9EHOOK-%E8%BF%9B%E7%A8%8B%E5%BF%AB%E7%85%A7%E5%87%BD%E6%95%B0-%E5%8F%AB%E5%95%A5%E5%BF%98%E4%BA%86-%E6%9F%90%E4%BA%9BGame%E4%BC%9A%E8%B0%83%E7%94%A8%E5%97%B7"><span class="nav-number">1.1.</span> <span class="nav-text">这个起始就是一个断链隐藏 而且很麻烦 没有什么特别之处 最多当学习HOOK了吧 但是可以通过这个项目搞一搞HOOK 进程快照函数 叫啥忘了 某些Game会调用嗷~</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%94%BE%E4%BB%A3%E7%A0%81%EF%BC%9A"><span class="nav-number">1.2.</span> <span class="nav-text">先放代码：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E5%8E%9F%E7%90%86"><span class="nav-number">1.3.</span> <span class="nav-text">项目原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.4.</span> <span class="nav-text">项目实现</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <!--头像跳转-->
+  <a href="/about">
+    <img class="site-author-image" itemprop="image" alt="Leon Chow"
+      src="/images/1.jpg">
+  <p class="site-author-name" itemprop="name">Leon Chow</p>
+  <div class="site-description" itemprop="description">人生不是轨道 是旷野</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives">
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/LeonChows" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;LeonChows" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:anthemhack6@gmail.com" title="E-Mail → mailto:anthemhack6@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      有问题联系我：
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://wpa.qq.com/msgrd?v=3&uin=3144994852&site=gq&menu=yes" title="http:&#x2F;&#x2F;wpa.qq.com&#x2F;msgrd?v&#x3D;3&amp;uin&#x3D;3144994852&amp;site&#x3D;gq&amp;menu&#x3D;yes" rel="noopener" target="_blank">点我跳转QQ</a>
+        </li>
+    </ul>
+  </div>
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">鲁ICP备2023031930号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Leon Chow</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">16k</span>
+</div>
+
+
+<!-- 网站运行时间的设置 -->
+<span id="timeDate">载入天数...</span>
+<span id="times">载入时分秒...</span>
+<script>
+    var now = new Date();
+    function createtime() {
+        var grt= new Date("15/04/2024 13:14:21");//此处修改你的建站时间或者网站上线时间
+        now.setTime(now.getTime()+250);
+        days = (now - grt ) / 1000 / 60 / 60 / 24; dnum = Math.floor(days);
+        hours = (now - grt ) / 1000 / 60 / 60 - (24 * dnum); hnum = Math.floor(hours);
+        if(String(hnum).length ==1 ){hnum = "0" + hnum;} minutes = (now - grt ) / 1000 /60 - (24 * 60 * dnum) - (60 * hnum);
+        mnum = Math.floor(minutes); if(String(mnum).length ==1 ){mnum = "0" + mnum;}
+        seconds = (now - grt ) / 1000 - (24 * 60 * 60 * dnum) - (60 * 60 * hnum) - (60 * mnum);
+        snum = Math.round(seconds); if(String(snum).length ==1 ){snum = "0" + snum;}
+        document.getElementById("timeDate").innerHTML = "本站居然运行了 "+dnum+" 天 ";
+        document.getElementById("times").innerHTML = hnum + " 小时 " + mnum + " 分 " + snum + " 秒";
+    }
+setInterval("createtime()",250);
+</script>
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,0' opacity='0.5' zIndex='-1' count='150' src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+    <script src="/js/cursor/cherry.js"></script>
+	<script src="/js/cursor/firework.js"></script>
+  
+  
+</body>
+</html>

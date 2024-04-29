@@ -1,0 +1,52 @@
+.text-popup {
+  animation: textPopup 1s;
+  color: #f00;
+  user-select: none;
+  white-space: nowrap;
+  position: absolute;
+  z-index: 99;
+}
+@-moz-keyframes textPopup {
+  0%, 100% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
+@-webkit-keyframes textPopup {
+  0%, 100% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
+@-o-keyframes textPopup {
+  0%, 100% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
+@keyframes textPopup {
+  0%, 100% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
